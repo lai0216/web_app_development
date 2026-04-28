@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="page-title"><i class="fa-solid fa-earth-americas me-2"></i>我的旅程</h1>
+</div>
+
+<div class="row g-4">
+    {% for trip in itineraries %}
+    <div class="col-md-6 col-lg-4">
+        <div class="glass-card h-100 d-flex flex-column">
+            <h3 class="mb-3 text-white">{{ trip.title }}</h3>
+            <p class="text-secondary mb-4">
+                <i class="fa-regular fa-calendar me-2"></i>
+                {% if trip.start_date and trip.end_date %}
+                    {{ trip.start_date }} ~ {{ trip.end_date }}
+                {% else %}
+                    日期未定
+                {% endif %}
+            </p>
+            <div class="mt-auto d-flex gap-2">
+                <a href="{{ url_for('planner.view_planner', id=trip.id) }}" class="btn btn-primary flex-grow-1">
+                    <i class="fa-solid fa-map-location-dot me-1"></i>規劃
+                </a>
+                <a href="{{ url_for('budget.view_budget', id=trip.id) }}" class="btn btn-outline-light">
+                    <i class="fa-solid fa-wallet"></i>
+                </a>
+                <form action="{{ url_for('planner.delete_itinerary', id=trip.id) }}" method="POST" class="d-inline" onsubmit="return confirm('確定要刪除這個行程嗎？');">
+                    <button type="submit" class="btn btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center py-5">
+        <div class="glass-card">
+            <i class="fa-solid fa-suitcase-rolling fa-4x text-secondary mb-3"></i>
+            <h3 class="text-white">還沒有任何行程</h3>
+            <p class="text-secondary mb-4">開始規劃你的下一趟旅程吧！</p>
+            <a href="{{ url_for('planner.new_planner') }}" class="btn btn-primary btn-lg">建立新行程</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

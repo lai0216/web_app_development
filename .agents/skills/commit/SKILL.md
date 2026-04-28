@@ -1,60 +1,122 @@
 ---
-name: api-design
-description: 設計 Flask 路由與頁面規劃。用於資料庫設計後，規劃每個頁面的 URL、HTTP 方法與對應邏輯。
+name: commit
+description: 提交並推送程式碼變更。用於每個開發階段完成後，將成果儲存到 Git 並推送到 GitHub。
 ---
 
-# API Design Skill — 路由與頁面設計
+# Commit Skill — 提交與推送程式碼
 
-這個 skill 會引導 AI agent 規劃 Flask 的路由（Routes），包含每個頁面的 URL 路徑、HTTP 方法、輸入/輸出與對應的 Jinja2 模板。
+這個 skill 會引導 AI agent 幫你完成 Git 提交與推送，並在必要時設定 Git 身份識別資訊。
 
 ## When to use this skill
 
-- 資料庫設計完成後，開始規劃前後端的對應關係
-- 想確認每個頁面需要哪些路由
-- 需要產出路由對照表供團隊分工參考
+- 完成某個開發階段後，想要儲存進度
+- 要把程式碼推送到 GitHub，讓組員可以取得最新版本
+- 遇到 Git 要求設定 `user.name` 或 `user.email` 的提示
+
+## ⚠️ 設定 Git 使用者身份
+
+如果 Git 顯示以下提示，需要先設定身份才能 commit：
+
+```
+Author identity unknown
+
+*** Please tell me who you are.
+
+Run
+
+  git config --global user.email "you@example.com"
+  git config --global user.name "Your Name"
+```
+
+請使用 `antigravity` 作為 username 與 email：
+
+```bash
+git config --global user.name "antigravity"
+git config --global user.email "antigravity"
+```
+
+> 這樣設定後，之後所有 commit 都不需要再重新設定。
 
 ## How to use it
 
-請在你的 prompt 裡使用以下指示：
+### 基本用法：提交並推送
 
 ```
-請閱讀 docs/PRD.md、docs/ARCHITECTURE.md 與 docs/DB_DESIGN.md，產出路由設計文件，儲存為 docs/ROUTES.md。
+請幫我將目前的變更提交並推送到 GitHub。
 
-同時在 app/routes/ 建立對應的 Python 檔案骨架（只寫函式定義與註解，不寫實作邏輯）。
-
-路由設計文件需包含：
-
-1. **路由總覽表格**
-   一張表格包含以下欄位：
-   | 功能 | HTTP 方法 | URL 路徑 | 對應模板 | 說明 |
-
-   範例：
-   | 任務列表 | GET | /tasks | templates/tasks/index.html | 顯示所有任務 |
-   | 新增任務頁面 | GET | /tasks/new | templates/tasks/new.html | 顯示表單 |
-   | 建立任務 | POST | /tasks | — | 接收表單，存入 DB，重導向 |
-   | 任務詳情 | GET | /tasks/<id> | templates/tasks/detail.html | 顯示單筆任務 |
-   | 編輯任務頁面 | GET | /tasks/<id>/edit | templates/tasks/edit.html | 顯示編輯表單 |
-   | 更新任務 | POST | /tasks/<id>/update | — | 接收表單，更新 DB |
-   | 刪除任務 | POST | /tasks/<id>/delete | — | 刪除後重導向 |
-
-2. **每個路由的詳細說明**
-   - 輸入（URL 參數、表單欄位）
-   - 處理邏輯（呼叫哪個 Model 方法）
-   - 輸出（渲染哪個模板或重導向到哪裡）
-   - 錯誤處理（404、資料驗證失敗時怎麼處理）
-
-3. **Jinja2 模板清單**
-   - 列出所有需要建立的 HTML 模板檔案
-   - 說明每個模板繼承哪個 base template
-
-4. **路由骨架程式碼**
-   - 在 app/routes/ 為每個功能模組建立一個 .py 檔
-   - 每個函式只寫 @app.route 裝飾器、函式名稱與 docstring，不寫實作
-
-請確保 URL 設計符合 RESTful 慣例（盡量使用名詞，用 HTTP 方法區分操作）。
-注意：由於使用 HTML 表單，刪除與更新操作用 POST 而非 DELETE/PUT。
+commit 訊息：[描述這次做了什麼，例如：docs: add PRD]
 ```
 
-## 產出範例
+AI 會執行以下步驟：
+1. 確認 Git 使用者身份是否已設定（若無則設定為 `antigravity`）
+2. `git add .` — 加入所有變更
+3. `git commit -m "[你的訊息]"` — 建立 commit
+4. `git push` — 推送到 GitHub
 
-執行後應在 `docs/ROUTES.md` 看到完整路由表，在 `app/routes/` 看到帶有 docstring 的函式骨架。
+---
+
+### 完整提示語（可直接複製使用）
+
+```
+請幫我提交並推送目前的變更：
+
+1. 如果尚未設定 Git 身份，請先執行：
+   git config --global user.name "antigravity"
+   git config --global user.email "antigravity"
+
+2. 然後執行：
+   git add .
+   git commit -m "[在此填入 commit 訊息]"
+   git push
+
+完成後告訴我推送成功，並顯示 commit 的 hash 值。
+```
+
+---
+
+## Commit 訊息格式建議
+
+遵循以下格式，讓歷史紀錄更清楚：
+
+| 類型   | 使用時機              | 範例                         |
+| ------ | --------------------- | ---------------------------- |
+| `docs` | 新增或修改文件        | `docs: add PRD`              |
+| `feat` | 新增功能              | `feat: add task create form` |
+| `fix`  | 修復錯誤              | `fix: form validation error` |
+| `chore`| 設定、初始化等雜項    | `chore: init project`        |
+
+---
+
+## 各開發階段建議的 commit 訊息
+
+| 階段       | 建議 commit 訊息                          |
+| ---------- | ----------------------------------------- |
+| 階段一完成 | `docs: add PRD`                           |
+| 階段二完成 | `docs: add system architecture`           |
+| 階段三完成 | `docs: add user flowchart`                |
+| 階段四完成 | `feat: add database schema and models`    |
+| 階段五完成 | `feat: add route skeleton and template plan` |
+| 階段六完成 | `feat: implement [功能名稱]`              |
+
+---
+
+## 常見問題
+
+**Q: push 時要求輸入帳號密碼？**
+
+GitHub 已停止支援密碼驗證，請使用 Personal Access Token（PAT）：
+1. 到 GitHub → Settings → Developer settings → Personal access tokens
+2. 產生一個新 token（勾選 `repo` 權限）
+3. push 時，「密碼」欄位貼上 token 即可
+
+**Q: push 被拒絕（rejected）？**
+
+可能是遠端有別的組員更新過，先執行：
+```bash
+git pull --rebase
+git push
+```
+
+**Q: 不小心 commit 了不該 commit 的檔案？**
+
+告訴 AI：「我剛才不小心 commit 了 [檔案名稱]，請幫我移除。」

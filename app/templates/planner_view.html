@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="{{ url_for('main.index') }}" class="text-secondary text-decoration-none mb-2 d-inline-block">
+            <i class="fa-solid fa-arrow-left me-1"></i>回到列表
+        </a>
+        <h1 class="page-title mb-0">{{ itinerary.title }}</h1>
+        <p class="text-secondary mt-1"><i class="fa-regular fa-calendar me-2"></i>{{ itinerary.start_date or '未定' }} ~ {{ itinerary.end_date or '未定' }}</p>
+    </div>
+    <div>
+        <a href="{{ url_for('budget.view_budget', id=itinerary.id) }}" class="btn btn-outline-light me-2">
+            <i class="fa-solid fa-wallet me-2"></i>預算管理
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- 左側：新增景點表單 -->
+    <div class="col-lg-4">
+        <div class="glass-card sticky-top" style="top: 100px;">
+            <h4 class="mb-4 text-white"><i class="fa-solid fa-location-dot me-2"></i>加入新地點</h4>
+            <form action="{{ url_for('planner.add_place', id=itinerary.id) }}" method="POST">
+                <div class="mb-3">
+                    <label class="form-label text-secondary">景點名稱</label>
+                    <input type="text" name="name" class="form-control" required placeholder="想去哪裡？">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-secondary">安排天數</label>
+                    <input type="number" name="day_number" class="form-control" required min="1" value="1">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label text-secondary">備註 (選填)</label>
+                    <textarea name="notes" class="form-control" rows="2" placeholder="注意事項或營業時間..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">新增景點</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 右側：行程列表 (支援拖曳) -->
+    <div class="col-lg-8">
+        {% set grouped_destinations = {} %}
+        {% for dest in destinations %}
+            {% if dest.day_number not in grouped_destinations %}
+                {% set _ = grouped_destinations.update({dest.day_number: []}) %}
+            {% endif %}
+            {% set _ = grouped_destinations[dest.day_number].append(dest) %}
+        {% endfor %}
+        
+        {% if grouped_destinations %}
+            {% for day, day_dests in grouped_destinations.items()|sort %}
+            <div class="glass-card mb-4">
+                <h4 class="mb-3"><span class="badge-day">Day {{ day }}</span></h4>
+                <div class="sortable-list" data-day="{{ day }}">
+                    {% for dest in day_dests %}
+                    <div class="card bg-dark bg-opacity-50 text-white mb-2 border-secondary sortable-item" data-id="{{ dest.id }}">
+                        <div class="card-body d-flex justify-content-between align-items-center p-3">
+                            <div>
+                                <i class="fa-solid fa-grip-vertical text-secondary me-3" style="cursor: grab;"></i>
+                                <strong class="fs-5">{{ dest.name }}</strong>
+                                {% if dest.notes %}
+                                <p class="text-secondary mb-0 mt-1 small">{{ dest.notes }}</p>
+                                {% endif %}
+                            </div>
+                            <form action="{{ url_for('planner.delete_destination', dest_id=dest.id) }}" method="POST" class="d-inline" onsubmit="return confirm('確定要移除此景點？');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-xmark"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="glass-card text-center py-5">
+                <p class="text-secondary mb-0">尚未安排任何景點，從左側表單開始新增吧！</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const lists = document.querySelectorAll('.sortable-list');
+    lists.forEach(list => {
+        new Sortable(list, {
+            group: 'shared',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            handle: '.fa-grip-vertical',
+            onEnd: function (evt) {
+                let updates = [];
+                document.querySelectorAll('.sortable-list').forEach(ul => {
+                    let dayNum = ul.dataset.day;
+                    ul.querySelectorAll('.sortable-item').forEach((item, index) => {
+                        updates.push({
+                            id: parseInt(item.dataset.id),
+                            order_index: index + 1,
+                            day_number: parseInt(dayNum)
+                        });
+                    });
+                });
+
+                fetch('{{ url_for("api.update_order") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updates)
+                }).then(response => {
+                    if(!response.ok) {
+                        alert('排序更新失敗，請重新整理頁面');
+                    }
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
