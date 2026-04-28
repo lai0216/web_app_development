@@ -1,0 +1,28 @@
+CREATE TABLE IF NOT EXISTS itineraries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    start_date TEXT,
+    end_date TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS destinations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    itinerary_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    day_number INTEGER NOT NULL,
+    order_index INTEGER NOT NULL DEFAULT 0,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (itinerary_id) REFERENCES itineraries (id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS budgets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    itinerary_id INTEGER NOT NULL,
+    category TEXT NOT NULL,
+    amount REAL NOT NULL DEFAULT 0.0,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (itinerary_id) REFERENCES itineraries (id) ON DELETE CASCADE
+);
